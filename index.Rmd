@@ -1,0 +1,1084 @@
+---
+title: Marine World Heritage site shapes
+date: "`r Sys.Date()`"
+author: Pieter Provoost, Robbert Casier
+output: (function(...) {
+  rmdformats::robobook(toc_depth = 4, pandoc_args = c("+RTS", "-K2000m", "-RTS"), ...) })
+editor_options: 
+  chunk_output_type: console
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "docs") })  
+---
+
+This notebook attempts to create accurate spatial features for marine World Heritage sites, with the purpose of selecting species occurrence records from biodiversity databases. The primary sources of spatial information are two source files from Marine Regions and UNEP. In addition to the code in this notebook, a number of corrections have been done using desktop GIS software. In some cases, spatial information is fetched from the UNEP-WCMC web services.
+
+Where possible, a distinction is made between core and buffer areas. The `buffer` field can have values `TRUE` for buffer areas, `FALSE` for core areas, and `NA` for combined or undetermined areas.
+
+## Issue tracking
+
+See https://github.com/iobis/mwhs-shapes/issues for current progress as well as more details about the problems for each site.
+
+## Dependencies
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(sf)
+library(mapview)
+library(sfheaders)
+library(ggplot2)
+library(stringr)
+library(parsnip) # pieterprovoost/parsnip
+
+mapviewOptions(fgb = FALSE)
+```
+
+## Fetch and load Marine Regions shapefile
+
+Thios shows how to fetch the Marine Regions shapefile, but note that the remainder of the notebook is based on an edited version.
+
+```{r message=FALSE, warning=FALSE}
+if (!file.exists("data/marineregions/worldheritagemarineprogramme.shp")) {
+  download.file("http://geo.vliz.be/geoserver/wfs?request=getfeature&service=wfs&version=1.0.0&typename=MarineRegions:worldheritagemarineprogramme&outputformat=SHAPE-ZIP", "data/marineregions.zip")
+  unzip("data/marineregions.zip", exdir = "data/marineregions")
+}
+
+marineregions <- st_read("data/marineregions_edited/worldheritagemarineprogramme.shp", options = "ENCODING=UTF-8", quiet = TRUE)
+```
+
+## Load UNEP shapefile
+
+```{r message=FALSE, warning=FALSE}
+unep <- st_read("data/unep_edited/World_Heritage_Sites.shp", options = "ENCODING=UTF-8", quiet = TRUE)
+```
+
+## Utility functions
+
+```{r message=FALSE, warning=FALSE}
+clean_mr_shapes <- function(rows) {
+  rows %>%
+    select(name = full_name, source_original = source) %>%
+    mutate(source = "Marine Regions")
+}
+
+clean_unep_shapes <- function(rows) {
+  rows %>%
+    select(name = NAME) %>%
+    mutate(source = "UNEP")
+}
+
+visualize <- function(site) {
+  ggplot() + geom_sf(data = site, aes(fill = buffer)) + scale_fill_brewer(palette = "Paired", direction = -1)
+}
+```
+
+## Sites
+
+Initialize a data structure:
+
+```{r message=FALSE, warning=FALSE}
+shapes <- st_sf(
+  name = character(),
+  source = character(),
+  source_original = character(),
+  buffer = logical(),
+  geometry = st_sfc(crs = 4326)
+)
+```
+
+### [Aldabra Atoll](https://whc.unesco.org/en/list/185)
+
+UNEP source only includes land area, the current solution is to work with the Marine Regions shape and to fill in the land area.
+
+```{r message=FALSE, warning=FALSE}
+site <- marineregions %>%
+  filter(full_name == "Aldabra Atoll") %>%
+  clean_mr_shapes() %>%
+  sf_remove_holes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Archipiélago de Revillagigedo](https://whc.unesco.org/en/list/1510)
+
+Only UNEP has this site, use that shape but also add the rectangular buffer zone.
+
+```{r message=FALSE, warning=FALSE}
+shape <- unep %>%
+  filter(NAME == "Archipiélago de Revillagigedo") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+coord_min <- parsedms("110° 4’ 41’’ W 17° 39’ 19’’ N")
+coord_max <- parsedms("115° 28’ 17’’ W 20° 0’ 31’’ N")
+
+box <- st_union(
+    st_as_sf(coord_min, coords = c("lon", "lat"), crs = 4326),
+    st_as_sf(coord_max, coords = c("lon", "lat"), crs = 4326)
+  ) %>%
+  st_bbox() %>%
+  st_as_sfc()
+
+buffer <- data.frame(
+    name = "Archipiélago de Revillagigedo",
+    buffer = TRUE,
+    source = "UNEP",
+    geometry = st_difference(box, shape)
+  ) %>%
+  st_as_sf()
+
+site <- bind_rows(shape, buffer)
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Area de Conservación Guanacaste](https://whc.unesco.org/en/list/928)
+
+The available information is rather confusing, even within the nomination file maps are inconsistent. I'm working with the UNEP version, but added corrections to the marine part based on coordinates available from https://www.acguanacaste.ac.cr/biodesarrollo/sector-marino. Note that these coordinates are not accurate either, and columns were labeled incorrectly.
+
+```{r message=FALSE, warning=FALSE}
+c(
+  "10o 53´28.2´´ N 085o57´00.9´´ W",
+  "10o 52´09.1´´ N 085o57´02.5´´ W",
+  "10o 51´04.5´´ N 085o57´02.5´´ W",
+  "10o 50´20.6´´ N 085o59´19.8´´ W",
+  "10o 48´18.9´´ N 085o58´10.6´´ W",
+  "10o 48´18.9´´ N 085o52´44.4´´ W",
+  "10o 46´05.3´´ N 085o49´09.0´´ W",
+  "10o 45´01.9´´ N 085o46´44.4´´ W",
+  "10o 40´06.7´´ N 085o51´39.7´´ W",
+  "10o 40´06.7´´ N 085o51´28.5´´ W",
+  "10o 39´47.8´´ N 085o51´11.2´´ W",
+  "10o 39´53.3´´ N 085o50´51.5´´ W",
+  "10o 39´24.8´´ N 085o50´15.8´´ W",
+  "10o 39´38.9´´ N 085o49´46.7´´ W",
+  "10o 37´36.8´´ N 085o48´11.1´´ W",
+  "10o 36´58.7´´ N 085o48´00.1´´ W",
+  "10o 36´16.8´´ N 085o48´18.6´´ W",
+  "10o 35´56.6´´ N 085o48´21.8´´ W",
+  "10o 35´35.3´´ N 085o48´16.6´´ W",
+  "10o 44´07.0´´ N 085o39´44.5´´ W",
+  "10o 53´28.2´´ N 085o57´00.9´´ W"
+) %>%
+  parsedms() %>%
+  as.matrix() %>%
+  list() %>%
+  st_polygon()
+```
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Area de Conservación Guanacaste") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Banc d'Arguin National Park](https://whc.unesco.org/en/list/506)
+
+Using UNEP.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Banc d'Arguin National Park") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Belize Barrier Reef Reserve System](https://whc.unesco.org/en/list/764)
+
+Both sources very inaccurate. Data from the source below fills some of the gaps, but more work is needed.
+
+> Meerman J. C., 2004, Belize Protected Areas Map Shapefile. http://biological-diversity.info
+
+```{r message=FALSE, warning=FALSE}
+site_unep <- unep %>%
+  filter(NAME == "Belize Barrier Reef Reserve System") %>%
+  clean_unep_shapes()
+
+site_belize <- st_read("data/belize_edited/prot_areas_2005-04-12.shp", options = "ENCODING=UTF-8", quiet = TRUE) %>%
+  select() %>%
+  mutate(name = "Belize Barrier Reef Reserve System")
+
+site <- bind_rows(site_unep, site_belize) %>%
+  group_by(name) %>%
+  summarize() %>%
+  mutate(source = "UNEP, Jan Meerman", buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Brazilian Atlantic Islands: Fernando de Noronha and Atol das Rocas Reserves](https://whc.unesco.org/en/list/1000)
+
+UNEP has more or less accurate core areas, while Marine Regions has the buffer areas.
+
+```{r message=FALSE, warning=FALSE}
+core <- unep %>%
+  filter(NAME == "Brazilian Atlantic Islands: Fernando de Noronha and Atol das Rocas Reserves") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+buffer <- marineregions %>%
+  filter(full_name == "Brazilian Atlantic Islands: Fernando de Noronha and Atol das Rocas Reserves" & str_detect(subarea, "Buffer")) %>%
+  clean_mr_shapes() %>%
+  sf_remove_holes() %>%
+  mutate(geometry = st_difference(geometry, core$geometry)) %>%
+  mutate(buffer = TRUE)
+
+site <- bind_rows(core, buffer)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Cocos Island National Park](https://whc.unesco.org/en/list/820)
+
+Using UNEP which appears to represent the 12 miles zone, versus 15 km for Marine Regions.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Cocos Island National Park") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Coiba National Park and its Special Zone of Marine Protection](https://whc.unesco.org/en/list/1138)
+
+UNEP does not have the buffer separately, and none of the sources are perfectly accurate. Working with coordinates.
+
+```{r message=FALSE, warning=FALSE}
+core_poly <- c(
+  "07o 10' 22\" N  81o 32’ 35\" W",
+  "07o 11' 07\" N  81o 35' 07\" W",
+  "07o 10' 04\" N  81o 46' 40\" W",
+  "07o 11' 17\" N  81o 49' 53\" W",
+  "07o 28' 22\" N  81o 56' 15\" W",
+  "07o 34' 46\" N  81o 51' 54\" W",
+  "07o 44' 54\" N  81o 50' 43\" W",
+  "07o 53' 29\" N  81o 51' 10\" W",
+  "07o 53' 37\" N  81o 46' 37\" W",
+  "07o 40' 00\" N  81o 32' 37\" W",
+  "07o 10' 22\" N  81o 32’ 35\" W"
+) %>%
+  parsnip::parsedms() %>%
+  as.matrix() %>%
+  list() %>%
+  st_polygon()
+
+buffer_poly <- c(
+  "07o53'29\" N 81o51'10\" W",
+  "07o44'54\" N 81o50'43\" W",
+  "07o34'46\" N 81o51'54\" W",
+  "07o28'22\" N 81o56'15\" W",
+  "07o11'17\" N 81o49'53\" W",
+  "07o25'28\" N 82o16'08\" W",
+  "07o30'12\" N 82o16'08\" W",
+  "07o53'29\" N 81o51'10\" W"
+) %>%
+  parsnip::parsedms() %>%
+  as.matrix() %>%
+  list() %>%
+  st_polygon()
+
+site <- data.frame(
+  name = "Coiba National Park and its Special Zone of Marine Protection",
+  buffer = c(FALSE, TRUE),
+  source = "WHC",
+  geometry = st_sfc(core_poly, buffer_poly)
+) %>%
+  st_as_sf(crs = 4326)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [East Rennell](https://whc.unesco.org/en/list/854)
+
+Marine Regions appears to be correct, but we added the inner lake area manually.
+
+```{r message=FALSE, warning=FALSE}
+site <- marineregions %>%
+  filter(full_name == "East Rennell") %>%
+  clean_mr_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Everglades National Park](https://whc.unesco.org/en/list/76)
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Everglades National Park") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [French Austral Lands and Seas](https://whc.unesco.org/en/list/1603)
+
+Using the UNEP version.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "French Austral Lands and Seas") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Galápagos Islands](https://whc.unesco.org/en/list/1)
+
+I'm assuming that the 40 miles zone is the appropriate boundary for this site. The feature in the Marine Regions files corresponds visually to the map on the World Heritage website.
+
+```{r message=FALSE, warning=FALSE}
+site <- marineregions %>%
+  filter(str_detect(full_name, "pagos Islands")) %>%
+  clean_mr_shapes() %>%
+  group_by() %>%
+  summarize() %>%
+  mutate(name = "Galápagos Islands") %>%
+  sf_remove_holes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Gough and Inaccessible Islands](https://whc.unesco.org/en/list/740)
+
+Using UNEP.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Gough and Inaccessible Islands") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Great Barrier Reef](https://whc.unesco.org/en/list/154)
+
+Using the UNEP version.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Great Barrier Reef") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Gulf of Porto: Calanche of Piana, Gulf of Girolata, Scandola Reserve](https://whc.unesco.org/en/list/258)
+
+UNEP is not very accurate, but Marine Regions only has the marine part. Combining both sources for now.
+
+```{r message=FALSE, warning=FALSE}
+site_unep <- unep %>%
+  filter(NAME == "Gulf of Porto: Calanche of Piana, Gulf of Girolata, Scandola Reserve") %>%
+  clean_unep_shapes()
+
+site_mr <-  marineregions %>%
+  filter(full_name == "Gulf of Porto: Calanche of Piana, Gulf of Girolata, Scandola Reserve") %>%
+  clean_mr_shapes()
+
+site <- bind_rows(site_unep, site_mr) %>%
+  group_by(name) %>%
+  summarize() %>%
+  mutate(source = "UNEP, Marine Regions", buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Ha Long Bay](https://whc.unesco.org/en/list/672)
+
+Marine Regions appears to be more accurate. Note that changes are coming in 2022, and coordinates are available. Working with Marine Regions for now.
+
+```{r message=FALSE, warning=FALSE}
+site <- marineregions %>%
+  filter(full_name == "Ha Long Bay") %>%
+  clean_mr_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Heard and McDonald Islands](https://whc.unesco.org/en/list/577)
+
+Using UNEP here although there may be a minor projection issue which has not been fixed yet.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Heard and McDonald Islands") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [High Coast / Kvarken Archipelago](https://whc.unesco.org/en/list/898)
+
+Both sources identical, using UNEP.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "High Coast / Kvarken Archipelago") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Ibiza, Biodiversity and Culture](https://whc.unesco.org/en/list/417)
+
+UNEP has the core zone, but not the buffer. The buffer area can be fetched directly from UNEP-WCMC, but the north east section needs to be corrected using a custom clipping feature.
+
+```{r message=FALSE, warning=FALSE}
+core <- unep %>%
+  filter(NAME == "Ibiza, Biodiversity and Culture") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+clip <- st_as_sf(data.frame(wkt = "POLYGON ((1.40440343773271481 38.87223136846967719, 1.46047331876305964 38.87360259802377982, 1.46037767923515105 38.91189665911434048, 1.40481423350584356 38.91187344006408466, 1.40524556562154967 38.87298833735852099, 1.40440343773271481 38.87223136846967719))"), wkt = "wkt", crs = 4326)
+
+buffer <- st_read("https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/1/query?where=wdpaid+%3D+%27196166%27&geometryType=esriGeometryEnvelope&returnGeometry=true&f=geojson") %>%
+  sf_remove_holes() %>%
+  mutate(geometry = st_difference(geometry, core$geometry)) %>%
+  mutate(geometry = st_difference(geometry, clip)) %>%
+  mutate(name = "Ibiza, Biodiversity and Culture", source = "UNEP", buffer = TRUE)
+
+site <- bind_rows(core, buffer)
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [iSimangaliso Wetland Park](https://whc.unesco.org/en/list/914)
+
+There are issues with both sources, but a correct geometry as found on https://worldheritageoutlook.iucn.org/explore-sites/wdpaid/198302.
+
+```{r message=FALSE, warning=FALSE}
+site <- st_read("https://worldheritageoutlook.iucn.org/node/1099/geoJson") %>%
+  mutate(name = "iSimangaliso Wetland Park", source = "IUCN", buffer = FALSE)
+  
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Islands and Protected Areas of the Gulf of California](https://whc.unesco.org/en/list/1182)
+
+This is a complex sites which only exists in the UNEP file, and seems to suffer from quite a bit of projection issues. Some of these have been fixed in the `unep_edited` shapefile using QGIS. Corrections are listed here: https://github.com/iobis/mwhs-shapes/issues/21.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Islands and Protected Areas of the Gulf of California") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = NA)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Kluane / Wrangell-St. Elias / Glacier Bay / Tatshenshini-Alsek](https://whc.unesco.org/en/list/72)
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Kluane / Wrangell-St Elias / Glacier Bay / Tatshenshini-Alsek") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Komodo National Park](https://whc.unesco.org/en/list/609)
+
+Marine Regions seems to correspond to the old boundaries, UNEP is more up to date but suffers from projection issues. These were corrected using desktop GIS.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Komodo National Park") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Lagoons of New Caledonia: Reef Diversity and Associated Ecosystems](https://whc.unesco.org/en/list/1115)
+
+Both sources have inaccuracies, but only Marine Regions includes the buffer zone. Working with Marine Regions for now, but needs more work.
+
+```{r message=FALSE, warning=FALSE}
+# fix for Evaluation error: Found 1 feature with invalid spherical geometry.
+sf_use_s2(FALSE) 
+
+core <- marineregions %>%
+  filter(full_name == "Lagoons of New Caledonia: Reef Diversity and Associated Ecosystems" & (is.na(subarea) | !str_detect(subarea, "Buffer"))) %>%
+  clean_mr_shapes() %>%
+  sf_remove_holes() %>%
+  mutate(buffer = FALSE) %>%
+  group_by(name, buffer, source_original) %>%
+  summarize()
+
+buffer <- marineregions %>%
+  filter(full_name == "Lagoons of New Caledonia: Reef Diversity and Associated Ecosystems" & str_detect(subarea, "Buffer")) %>%
+  clean_mr_shapes() %>%
+  sf_remove_holes() %>%
+  mutate(buffer = TRUE) %>%
+  group_by(name, buffer, source_original) %>%
+  summarize() %>%
+  mutate(geometry = st_difference(geometry, core$geometry))
+
+site <- bind_rows(core, buffer)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Lord Howe Island Group](https://whc.unesco.org/en/list/186)
+
+Only in UNEP.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Lord Howe Island Group") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Macquarie Island](https://whc.unesco.org/en/list/629)
+
+Marine Regions is incorrect, using UNEP.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Macquarie Island") %>%
+  sf_remove_holes() %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Malpelo Fauna and Flora Sanctuary](https://whc.unesco.org/en/list/1216)
+
+Marine Regions is incorrect, using UNEP.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Malpelo Fauna and Flora Sanctuary") %>%
+  sf_remove_holes() %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Natural System of Wrangel Island Reserve](https://whc.unesco.org/en/list/1023)
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Natural System of Wrangel Island Reserve") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site %>% st_shift_longitude())
+```
+
+### [New Zealand Sub-Antarctic Islands](https://whc.unesco.org/en/list/877)
+
+Marine Regions incorrect, using UNEP.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "New Zealand Sub-Antarctic Islands") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Ningaloo Coast](https://whc.unesco.org/en/list/1369)
+
+Using the UNEP version.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Ningaloo Coast") %>%
+  sf_remove_holes() %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Ogasawara Islands](https://whc.unesco.org/en/list/1362)
+
+Using the UNEP version.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Ogasawara Islands") %>%
+  sf_remove_holes() %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Papahānaumokuākea](https://whc.unesco.org/en/list/1326)
+
+Marine Regions appears to be rather inaccurate, so using UNEP.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Papahānaumokuākea") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Península Valdés](https://whc.unesco.org/en/list/937)
+
+UNEP only has (part of) the terrestrial area, Marine Regions only has marine but seems to include the buffer zone. The Marine Regions feature was edited to include the entire area including buffer zone.
+
+```{r message=FALSE, warning=FALSE}
+site <- marineregions %>%
+  filter(str_detect(full_name, "nsula Vald")) %>%
+  clean_mr_shapes() %>%
+  mutate(buffer = NA)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Phoenix Islands Protected Area](https://whc.unesco.org/en/list/1325)
+
+Using UNEP version.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Phoenix Islands Protected Area") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = NA)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Puerto-Princesa Subterranean River National Park](https://whc.unesco.org/en/list/652)
+
+Using UNEP, but the geometry was slightly moved to better correspond to the nomination file.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Puerto Princesa Subterranean River National Park") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Rock Islands Southern Lagoon](https://whc.unesco.org/en/list/1386)
+
+Marine Regions is incorrect, and UNEP does not have the buffer zone. I have tried to approximate the buffer zone for now.
+
+```{r message=FALSE, warning=FALSE}
+core <- unep %>%
+  filter(NAME == "Rock Islands Southern Lagoon") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+buffer <- data.frame(
+  geometry = st_as_sfc("POLYGON ((134.19273689383203418 7.01782750782449138, 134.03299677174231874 7.09247623454755782, 134.02883087705612297 7.12617480864035358, 134.03042556179755707 7.16009243761113279, 134.03792640497820798 7.2165987895721333, 134.04486141033524405 7.2485425700224928, 134.05690720502764179 7.27893003847564213, 134.07374201594276997 7.30694947012968488, 134.08468315725161801 7.31981736442988762, 134.08931301980507556 7.34297451036909621, 134.10041593741655674 7.37278369378465825, 134.11610452477088984 7.40045552824164243, 134.13598191465703735 7.42529001166094638, 134.15954527759078019 7.44665891716972084, 134.18619854166837513 7.46402168507693453, 134.215267471132222 7.47693909717127259, 134.24601672221271542 7.48508438742872073, 134.27046408986615234 7.48753062909717571, 134.27499387446709989 7.49418813881152257, 134.29598648568563135 7.51666058488495814, 134.32017610176330891 7.53564908225334484, 134.3276505136010428 7.53991449931733015, 134.46863028136289131 7.41894079044549315, 134.47989519360089616 7.40342987282545462, 134.3851382515632622 7.34028363915454296, 134.45336715599364652 7.28154745186230112, 134.5348008021731232 7.33060618709455003, 134.67087086952986397 7.20374694005931904, 134.661563058133396 7.18960132242367589, 134.64840160553640658 7.17278694198122579, 134.6140420581770627 7.13341662729863213, 134.55917951881696126 7.03550809551755929, 134.53196947425868757 6.99794950890865675, 134.514967563049197 6.97944742906301929, 134.49147996940945404 6.95767688269819917, 134.48537362391169836 6.95248599934561096, 134.44245260582164292 6.99210540065949449, 134.35820071277456123 7.10323923891168008, 134.27258755455486039 7.12280796079046752, 134.19273689383203418 7.01782750782449138))"),
+  name = "Rock Islands Southern Lagoon",
+  buffer = TRUE,
+  source = "WHC"
+) %>%
+  st_as_sf(crs = 4326) %>%
+  mutate(geometry = st_difference(geometry, core$geometry))
+
+site <- bind_rows(core, buffer)
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Sanganeb Marine National Park and Dungonab Bay – Mukkawar Island Marine National Park](https://whc.unesco.org/en/list/262)
+
+UNEP has the core site, but the buffer is missing. 
+
+```{r message=FALSE, warning=FALSE}
+core <- unep %>%
+  filter(NAME == "Sanganeb Marine National Park and Dungonab Bay - Mukkawar Island Marine National Park") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+```
+
+```{r message=FALSE, warning=FALSE}
+buffer_coords <- data.frame(
+  lon = c(
+    37.24889440680, 
+    37.24314298480,
+    37.17482666400,
+    37.18408351420,
+    37.17038240870,
+    37.18027608340,
+    37.16783990070,
+    37.17237738770,
+    37.20658279860,
+    37.20893404930,
+    37.18489366590,
+    37.14749997070,
+    37.12910953970,
+    37.12076712880,
+    37.11333325940,
+    37.04166607130,
+    37.04166392180,
+    37.00000436440,
+    36.91646691100,
+    37.09229615960,
+    37.54789696380,
+    37.56659381670,
+    37.52325540760,
+    37.49872239950,
+    37.32143434830,
+    37.29708084150,
+    37.27247623180,
+    37.24889440680 
+  ),
+  lat = c(
+    19.69884479750,
+    19.86075107100,
+    20.00318775250,
+    20.06448655350,
+    20.33092911820,
+    20.40063047100,
+    20.44540164470,
+    20.46453247360,
+    20.49351373260,
+    20.54742015470,
+    20.61874949780,
+    20.65000000520,
+    20.71366963420,
+    20.85554367460,
+    20.91666659240,
+    20.91666850450,
+    21.25000550930,
+    21.25000289920,
+    21.40998244860,
+    21.52385845370,
+    21.01682639990,
+    19.86364650980,
+    19.70602156810,
+    19.67097338850,
+    19.60725304570,
+    19.60712717560,
+    19.63221521320,
+    19.69884479750
+  )
+) %>%
+  as.matrix() %>%
+  list() %>%
+  st_polygon()  
+
+buffer <- data.frame(
+  name = "Sanganeb Marine National Park and Dungonab Bay - Mukkawar Island Marine National Park",
+  buffer = TRUE,
+  source = "WHC",
+  geometry = st_sfc(buffer_coords)
+) %>%
+  st_as_sf(crs = 4326) %>%
+  mutate(geometry = st_difference(geometry, core$geometry))
+
+site <- bind_rows(core, buffer)
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Shark Bay, Western Australia](https://whc.unesco.org/en/list/578)
+
+Using UNEP, and keeping the excluded areas explicitly named as such.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Shark Bay, Western Australia") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Shiretoko](https://whc.unesco.org/en/list/1193)
+
+Using UNEP version.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Shiretoko") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Sian Ka'an](https://whc.unesco.org/en/list/410)
+
+Using UNEP version.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Sian Ka'an") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Socotra Archipelago](https://whc.unesco.org/en/list/1263)
+
+The UNEP file has the marine and terrestrial core areas, but not the buffer zone. The Marine Regions file has the marine core areas (although with minor differences) and an incomplete buffer zone. We will construct a core area by combining both sources.
+
+Note that the Abt Al Kuri feature has been edited in the UNEP layer has been edited using desktop GIS.
+
+```{r message=FALSE, warning=FALSE}
+core_unep <- unep %>%
+  filter(NAME == "Socotra Archipelago") %>%
+  clean_unep_shapes()
+
+core_mr <- marineregions %>%
+  filter(full_name == "Socotra Archipelago" & !str_detect(subarea, "Buffer")) %>%
+  clean_mr_shapes()
+
+core <- bind_rows(core_unep, core_mr) %>%
+  group_by(name) %>%
+  summarize() %>%
+  mutate(source = "UNEP, Marine Regions", buffer = FALSE)
+```
+
+For the buffer zone we use the 12 nautical miles zone from the edited Marine Regions file.
+
+```{r message=FALSE, warning=FALSE}
+buffer <- marineregions %>%
+  filter(full_name == "Socotra Archipelago" & str_detect(subarea, "Buffer")) %>%
+  clean_mr_shapes() %>%
+  sf_remove_holes() %>%
+  st_difference(core) %>%
+  select(name, source, source_original) %>%
+  mutate(buffer = TRUE)
+
+site <- bind_rows(core, buffer)
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [St Kilda](https://whc.unesco.org/en/list/387)
+
+Both sources identical, using UNEP.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "St Kilda") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Sundarbans National Park](https://whc.unesco.org/en/list/452)
+
+Using the UNEP version for now, although the map provided by WHC is unclear and suggests the presence of a buffer zone.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Sundarbans National Park") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = NA)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Surtsey](https://whc.unesco.org/en/list/1267)
+
+UNEP has the core area, Marine Regions has the buffer.
+
+```{r message=FALSE, warning=FALSE}
+core <- unep %>%
+  filter(NAME == "Surtsey") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+buffer <- marineregions %>%
+  filter(full_name == "Surtsey" & subarea == "Buffer Zone") %>%
+  clean_mr_shapes() %>%
+  mutate(buffer = TRUE)
+
+site <- bind_rows(core, buffer)
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [The Sundarbans](https://whc.unesco.org/en/list/798)
+
+As there are some minor differences between the two sources, use both. Note that the Marine Regions version excludes land.
+
+```{r message=FALSE, warning=FALSE}
+site_unep <- unep %>%
+  filter(NAME == "The Sundarbans") %>%
+  clean_unep_shapes()
+
+site_mr <- marineregions %>%
+  filter(full_name == "The Sundarbans") %>%
+  clean_mr_shapes()
+
+site <- bind_rows(site_unep, site_mr) %>%
+  group_by(name) %>%
+  summarize() %>%
+  sf_remove_holes() %>%
+  mutate(source = "UNEP, Marine Regions", buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Tubbataha Reefs Natural Park](https://whc.unesco.org/en/list/653)
+
+There are some differences between UNEP, Marine Regions, and OpenStreetMap. Looking at the coordinates in the nomination document, UNEP is correct.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Tubbataha Reefs Natural Park") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Ujung Kulon National Park](https://whc.unesco.org/en/list/608)
+
+Both sources not very accurate, but the geometry on https://www.protectedplanet.net/2349 looks good.
+
+```{r message=FALSE, warning=FALSE}
+site <- st_read("https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/1/query?where=wdpaid+%3D+%272349%27&geometryType=esriGeometryEnvelope&returnGeometry=true&f=geojson") %>%
+  sf_remove_holes() %>%
+  mutate(name = "Ujung Kulon National Park", source = "UNEP", buffer = FALSE)
+  
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Wadden Sea](https://whc.unesco.org/en/list/1314)
+
+The UNEP version fits reasonably well, although some detail is missing around towns.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "The Wadden Sea") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [West Norwegian Fjords – Geirangerfjord and Nærøyfjord](https://whc.unesco.org/en/list/1195)
+
+Using UNEP for now although rather inaccurate.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "West Norwegian Fjords – Geirangerfjord and Nærøyfjord") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+### [Whale Sanctuary of El Vizcaino](https://whc.unesco.org/en/list/554)
+
+UNEP looks best but not accurate at all. I tried to manually correct some issues, but this needs to be redone properly.
+
+```{r message=FALSE, warning=FALSE}
+site <- unep %>%
+  filter(NAME == "Whale Sanctuary of El Vizcaino") %>%
+  clean_unep_shapes() %>%
+  mutate(buffer = FALSE)
+
+shapes <- bind_rows(shapes, site)
+visualize(site)
+```
+
+## Output
+### GeoPackage
+
+```{r message=FALSE, warning=FALSE}
+st_write(shapes, "output/marine_world_heritage.gpkg", append = FALSE)
+```
+
+### Image
+
+```{r message=FALSE, warning=FALSE}
+land <- st_read("data/simplified-land-polygons-complete-3857_simplified/simplified_land_polygons.shp", quiet = TRUE) %>%
+  st_set_crs(3857)
+land_detailed <- st_read("data/simplified-land-polygons-complete-3857/simplified_land_polygons.shp", quiet = TRUE) %>%
+  st_set_crs(3857)
+
+ggplot() +
+  geom_sf(data = shapes %>% filter(buffer == TRUE), fill = "#e378ae", size = NA) +
+  geom_sf(data = shapes %>% filter(is.na(buffer) | buffer == FALSE), fill = "#e62083", size = NA) +
+  geom_sf(data = land, fill = NA, color = "#000000", size = 0.1) +
+  coord_sf(crs = "ESRI:54030") +
+  theme_void()
+```
+
+```{r message=FALSE, warning=FALSE}
+p <- ggplot() +
+  geom_sf(data = shapes %>% filter(buffer == TRUE), fill = "#e378ae", size = NA) +
+  geom_sf(data = shapes %>% filter(is.na(buffer) | buffer == FALSE), fill = "#e62083", size = NA) +
+  geom_sf(data = land_detailed, fill = NA, color = "#000000", size = 0.1) +
+  coord_sf(crs = "ESRI:54030") +
+  theme_void()
+
+ggsave("output/map.png", plot = p, width = 12, height = 7, scale = 6, bg = "#ffffff", limitsize = FALSE)
+```

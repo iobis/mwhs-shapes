@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<metadata>
+	<idinfo>
+		<citation><citeinfo>
+				<origin>Jan Meerman</origin>
+				<pubdate>20050212</pubdate>
+				<title>Protected Areas of Belize</title>
+				<edition>20050101</edition>
+				<geoform>vector digital data</geoform>
+				<pubinfo><pubdate></pubdate>
+					<pubplace>El Progresso, Cayo District, Belize</pubplace>
+					<publish>Jan Meerman</publish>
+				</pubinfo>
+				<othercit>Meerman J. C., 2004, Belize Protected Areas Map Shapefile. http://biological-diversity.info</othercit>
+				<onlink>http://biological-diversity.info</onlink>
+				
+			<lworkcit><citeinfo><title>Belize Biodiversity Mapping Service</title><pubdate></pubdate><othercit></othercit><origin>Belize Biodiverstiy Mapping Service</origin><onlink>http://biological-diversity.info</onlink><pubinfo><pubdate></pubdate><publish></publish><pubplace /></pubinfo></citeinfo></lworkcit></citeinfo>
+		<citeinfo /><citeinfo /></citation>
+		<descript>
+			<abstract>This dataset depicts protected areas of Belize, created using the
+various issues of the Government Gazette Statutory Instruments.</abstract>
+			<purpose>The dataset was developed to aid in the Conservation Planning of Belize.</purpose>
+			<supplinf></supplinf>
+		</descript>
+		<timeperd><timeinfo><sngdate>April 17 2005</sngdate><current /></timeinfo>
+			<current>publication date</current><timeinfo /><timeinfo /></timeperd>
+		
+		<keywords>
+			
+		<theme><themekey>Protected Areas</themekey><themekey>Conservation</themekey><themekey>Forest Reserve</themekey><themekey>Nature Reserve</themekey><themekey>Marine Reserve</themekey><themekey>Archaeological Reserve</themekey><themekey>Bird Sanctuary</themekey><themekey>National Park</themekey><themekey>Natural Monument</themekey><themekey>Private Reserve</themekey><themekey>Spawning Aggregation</themekey><themekey>Wildlife Sanctuary</themekey><themekt>Data Basin tags</themekt></theme></keywords>
+		<accconst>None</accconst>
+		<useconst>Citation required. Metadata are to remain attached to shapefile</useconst>
+		<ptcontac>
+			<cntinfo>
+				<cntorgp><cntorg>Belize Tropical Forest Studies</cntorg><cntper>Jan Meerman</cntper></cntorgp>
+				
+				
+				
+				<cntemail>meerman@biological-diversity.info</cntemail>
+			</cntinfo>
+		<cntinfo /><cntinfo /></ptcontac>
+		<datacred>This dataset was obtained by the Conservation Biology Institute from the World Resources Institute "Belize Coastal Data CD" lacking required metadata.  CBI provided these attribute definitions, where possible.</datacred>
+	<status><progress>Complete</progress><update>As Needed</update></status><spdom><bounding /><bounding /></spdom></idinfo>
+	<dataqual>
+		<attracc>
+		<attraccr></attraccr></attracc>
+		<complete>Dataset was available to the consortium dealing with the
+National Protected Areas Policy and Systems Plan. Comments
+and corrections from this consortium were incorporated in
+this file.</complete>
+		<lineage>
+			<srcinfo>
+				<srccite><citeinfo>
+						<origin>Jan Meerman</origin>
+						<pubdate>20050417</pubdate>
+						<title>Belize Protected Areas Map</title>
+						<edition>20050101</edition>
+						<geoform>map</geoform>
+						<pubinfo>
+							<pubplace>El Progresso, Cayo District, Belize</pubplace>
+							<publish>Jan Meerman</publish>
+						</pubinfo>
+						<othercit>Government of Belize Gazette 1994 - 2005</othercit>
+						<onlink>http://biological-diversity.info</onlink>
+						<lworkcit><citeinfo>
+								<origin>Belize Biodiverstiy Mapping Service</origin>
+								<pubdate />
+								<title>Belize Biodiversity Mapping Service</title>
+								<pubinfo>
+									<pubplace>Belmopan, Belize.</pubplace>
+									<publish />
+								</pubinfo>
+								<onlink>http://biological-diversity.info</onlink>
+							</citeinfo>
+						</lworkcit>
+					</citeinfo>
+				</srccite>
+				<srctime><timeinfo><rngdates><begdate /><enddate /></rngdates></timeinfo>
+					<srccurr />
+				</srctime>
+				<srccitea />
+				<srccontr />
+			</srcinfo>
+			<procstep>
+				<procdesc>Origianal file originating from the Lands Information
+Center within the Ministry of National Resources. Corrected
+and updated using Statutory instruments published in the
+Governement Gazette 1994 - 2005. Additional input received
+from: Coastal Zone Management Institute; Forest Department
+and "consortium" involved with the National Protected Areas
+Policy and Systems Plan (2005)</procdesc>
+				<proccont><cntinfo>
+						<cntperp><cntper>Jan Meerman</cntper><cntorg>Belize Tropical Forest Studies</cntorg></cntperp>
+						<cntpos>Director</cntpos>
+						<cntaddr>
+							<addrtype>mailing and physical address</addrtype>
+							<address>P.O. Box 208,</address>
+							<city>Belmopan</city>
+							<state>Cayo District</state>
+							<postal>N.A.</postal>
+							<country>Belize</country>
+						</cntaddr>
+						<cntvoice>501-820-4017</cntvoice>
+						<cntemail>meerman@biological-diversity.info</cntemail>
+					</cntinfo>
+				</proccont>
+			</procstep>
+			<procstep>
+				<procdesc>Metadata imported.</procdesc>
+				<srcused>C:\DOCUME~1\lauretta\LOCALS~1\Temp\xmlB9.tmp</srcused>
+			</procstep>
+		</lineage>
+	</dataqual>
+	<spdoinfo>
+		<direct>Vector</direct>
+		<ptvctinf>
+			<sdtsterm><sdtstype>G-polygon</sdtstype>
+				<ptvctcnt>105</ptvctcnt></sdtsterm>
+		</ptvctinf>
+	</spdoinfo>
+	<spref>
+		<horizsys>
+			<geograph><latres>0</latres><longres>0</longres><geogunit>Decimal degreees</geogunit></geograph>
+			<geodetic>
+				<horizdn>D_WGS_1984</horizdn><ellips>WGS_1984</ellips><semiaxis>6378137.000000</semiaxis><denflat>298.257224</denflat>
+			</geodetic>
+		</horizsys>/n</spref>
+	<eainfo>
+		<detailed>
+			<enttyp>
+				<enttypl>prot_areas_2005-04-12</enttypl>/n<enttypd>Shapefile Attribute Table</enttypd>/n<enttypds>None</enttypds>
+			</enttyp><attr>
+				<attrlabl>NAME</attrlabl>
+				<attrdef>Name of the protected area</attrdef>
+				<attrdefs>Conservation Biology Institute</attrdefs>
+			<attalias>NAME</attalias><attrdomv /></attr>
+			<attr>
+				<attrlabl>STATUS</attrlabl>
+				<attrdef>Status of the protected area</attrdef>
+				<attrdefs>Conservation Biology Institute</attrdefs>
+			<attalias>STATUS</attalias><attrdomv /></attr>
+			<attr>
+				<attrlabl>ZONE</attrlabl>
+				<attrdef>Protected area zone</attrdef>
+				<attrdefs>Conservation Biology Institute</attrdefs>
+			<attalias>ZONE</attalias><attrdomv /></attr>
+			<attr>
+				<attrlabl>IUCN_CAT</attrlabl>
+				<attrdef>IUCN protection category (see http://www.unep-wcmc.org/protected_areas/categories/)</attrdef>
+				<attrdefs>Conservation Biology Institute</attrdefs>
+				<attrdomv>
+					<edom><edomv>II</edomv><edomvd>National Park</edomvd><edomvds>Conservation Biology Institute</edomvds></edom>
+					<edom><edomv>III</edomv><edomvd>Natural Monument</edomvd><edomvds>Conservation Biology Institute</edomvds></edom>
+					<edom><edomv>IV</edomv><edomvd>Habitat / Species Management Area</edomvd><edomvds>Conservation Biology Institute</edomvds></edom>
+					<edom><edomv>Ia</edomv><edomvd>Strict Nature Reserve</edomvd><edomvds>Conservation Biology Institute</edomvds></edom>
+					<edom><edomv>V</edomv><edomvd>Protected Landscape / Seascape</edomvd><edomvds>Conservation Biology Institute</edomvds></edom>
+					<edom><edomv>VI</edomv><edomvd>Managed Resource Protected Area</edomvd><edomvds>Conservation Biology Institute</edomvds></edom>
+				</attrdomv>
+			<attalias>IUCN_category</attalias></attr>
+			<attr>
+				<attrlabl>GAZETTTE</attrlabl>
+				<attrdef>Gazette issue used to obtain protected area data</attrdef>
+				<attrdefs>Conservation Biology Institute</attrdefs>
+			<attalias>GAZETTTE</attalias><attrdomv /></attr>
+			<attr>
+				<attrlabl>MGMT</attrlabl>
+				<attrdef>Management responsibility</attrdef>
+				<attrdefs>Conservation Biology Institute</attrdefs>
+				<attrdomv>
+					<edom><edomv>BWB/ASF</edomv><edomvd /><edomvds /></edom>
+					<edom><edomv>Fisheries</edomv><edomvd /><edomvds /></edom>
+					<edom><edomv>Forest Dep</edomv><edomvd /><edomvds /></edom>
+					<edom><edomv>ITCF</edomv><edomvd /><edomvds /></edom>
+					<edom><edomv>NICH</edomv><edomvd /><edomvds /></edom>
+					<edom><edomv>PfB</edomv><edomvd /><edomvds /></edom>
+					<edom><edomv>Private</edomv><edomvd /><edomvds /></edom>
+					<edom><edomv>TIDE</edomv><edomvd /><edomvds /></edom>
+					<edom><edomv>YCT</edomv><edomvd /><edomvds /></edom>
+				</attrdomv>
+			<attalias>MGMT</attalias></attr>
+			<attr>
+				<attrlabl>COMGMT</attrlabl>
+				<attrdef>Co-management responsibility</attrdef>
+				<attrdefs>Conservation Biology Institute</attrdefs>
+			<attalias>COMGMT</attalias><attrdomv /></attr>
+			<attr>
+				<attrlabl>ACRES</attrlabl>
+				<attrdef />
+				<attrdefs />
+			<attalias /><attrdomv /></attr>
+			<attr>
+				<attrlabl>HECTARES</attrlabl>
+				<attrdef />
+				<attrdefs />
+			<attalias /><attrdomv /></attr>
+			<attr>
+				<attrlabl>NOTES</attrlabl>
+				<attrdef>Notes</attrdef>
+				<attrdefs>Conservation Biology Institute</attrdefs>
+			<attalias>NOTES</attalias><attrdomv /></attr>
+			<attr>
+				<attrlabl>ID</attrlabl>
+				<attrdef />
+				<attrdefs />
+			<attalias /><attrdomv /></attr>
+		<attr><attrlabl>FID</attrlabl><attalias>FID</attalias><attrdef /><attrdomv /></attr><attr><attrlabl>Shape</attrlabl><attalias>Shape</attalias><attrdef /><attrdomv /></attr></detailed>
+	</eainfo>
+	<distinfo>
+		<resdesc>The Belize Protected Areas Map Shapefile was produced as
+part of the National Protected Areas Policy and Systems
+Plan (2005)</resdesc>
+		<stdorder>
+			<digform>
+				<digtopt><onlinopt>
+						<computer><networka><networkr /></networka></computer>
+						<accinstr />
+					</onlinopt>
+				</digtopt>
+			</digform>
+		</stdorder>
+		<distrib>
+			<cntinfo>
+				<cntorgp><cntorg>Belize Tropical Forest Studies</cntorg><cntper>Jan Meerman</cntper></cntorgp>
+				<cntpos>Director</cntpos>
+				<cntaddr>
+					<addrtype>mailing and physical address</addrtype>
+					<address>P.O. Box 208,</address>
+					<city>Belmopan</city>
+					<state>Cayo District</state>
+					<postal>N.A.</postal>
+					<country>Belize</country>
+				</cntaddr>
+				<cntvoice>501-820-4017</cntvoice>
+				<cntemail>meerman@biological-diversity.info</cntemail>
+			</cntinfo>
+		</distrib>
+		<distliab>Users must assume responsibility to determine the
+appropriate use of these data. The boundaries can not be
+used for a legal defenition.</distliab>
+	</distinfo>
+	<metainfo>
+		<metd>20050516</metd>
+		<metc>
+			<cntinfo>
+				<cntorgp><cntorg>Belize Tropical Forest Studies</cntorg><cntper>Jan Meerman</cntper></cntorgp>
+				<cntpos>Director</cntpos>
+				<cntaddr>
+					<addrtype>Mailing and physical address</addrtype>
+					<address>P.O. Box 208,</address>
+					<city>Belmopan</city>
+					<state>Cayo District</state>
+					<postal>N.A.</postal>
+					<country>Belize</country>
+				</cntaddr>
+				<cntvoice>501-820-4017</cntvoice>
+				<cntemail>meerman@biological-diversity.info</cntemail>
+			</cntinfo>
+		</metc>
+		<metstdn>FGDC Content Standards for Digital Geospatial Metadata</metstdn>
+		<metstdv>FGDC-STD-001-1998</metstdv>
+	</metainfo>
+	<Esri><CreaDate>20100517</CreaDate><CreaTime>12555700</CreaTime><SyncOnce>TRUE</SyncOnce><ArcGISFormat>1.0</ArcGISFormat><DataProperties><lineage><Process ToolSource="D:\Program Files\ArcGIS\Server9.4\ArcToolbox\Toolboxes\Data Management Tools.tbx\Project" Date="20100517" Time="125557">Project D:\\arcgisserver\\services\import\8bffbd71c006465c91a42e0004e14d5c\data\prot_areas_2005-04-12\prot_areas_2005-04-12.shp D:\\arcgisserver\\services\import\8bffbd71c006465c91a42e0004e14d5c\data\prot_areas_2005-04-12\p_prot_areas_2005-04-12.shp PROJCS['WGS_1984_Web_Mercator',GEOGCS['GCS_WGS_1984_Major_Auxiliary_Sphere',DATUM['D_WGS_1984_Major_Auxiliary_Sphere',SPHEROID['WGS_1984_Major_Auxiliary_Sphere',6378137.0,0.0]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Mercator'],PARAMETER['False_Easting',0.0],PARAMETER['False_Northing',0.0],PARAMETER['Central_Meridian',0.0],PARAMETER['Standard_Parallel_1',0.0],UNIT['Meter',1.0]] WGS_1984_Major_Auxiliary_Sphere_To_WGS_1984 GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]]</Process></lineage></DataProperties></Esri></metadata>
