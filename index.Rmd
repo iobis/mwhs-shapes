@@ -680,7 +680,7 @@ UNEP only has (part of) the terrestrial area, Marine Regions only has marine but
 site <- marineregions %>%
   filter(str_detect(full_name, "nsula Vald")) %>%
   clean_mr_shapes() %>%
-  mutate(buffer = NA)
+  mutate(buffer = NA, NAME = "Península Valdés")
 
 shapes <- bind_rows(shapes, site)
 visualize(site)
@@ -1015,7 +1015,7 @@ The UNEP version fits reasonably well, although some detail is missing around to
 site <- unep %>%
   filter(NAME == "The Wadden Sea") %>%
   clean_unep_shapes() %>%
-  mutate(buffer = FALSE)
+  mutate(buffer = FALSE, NAME = "Wadden Sea")
 
 shapes <- bind_rows(shapes, site)
 visualize(site)
